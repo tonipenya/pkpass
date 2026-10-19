@@ -24,7 +24,7 @@ Open http://127.0.0.1:5173. Vite forwards `/api/passes` to the local Cloudflare 
 - Repository: https://github.com/tonipenya/pkpass
 - Signing endpoint: https://pocket-pass-signing.pocket-pass.workers.dev/api/passes
 - GitHub repository variable `VITE_SIGNING_URL` points to this endpoint.
-- App: https://tonipenya.github.io/pkpass/
+- App: https://www.tonipenya.com/pkpass/ (GitHub Pages inherits the account’s existing custom domain)
 
 ## Deploy the Worker (free Cloudflare account)
 

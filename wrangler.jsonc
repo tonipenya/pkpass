@@ -6,7 +6,7 @@
   "workers_dev": true,
   "observability": { "enabled": false },
   "vars": {
-    "ALLOWED_ORIGINS": "https://tonipenya.github.io"
+    "ALLOWED_ORIGINS": "https://tonipenya.github.io,https://www.tonipenya.com"
   },
   "env": {
     "local": {
