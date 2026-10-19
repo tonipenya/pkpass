@@ -1,0 +1,22 @@
+{
+  "name": "pocket-pass",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "test": "node --test",
+    "worker:dev": "wrangler dev --env local --ip 127.0.0.1 --port 8787",
+    "worker:deploy": "wrangler deploy --env=\"\"",
+    "worker:check": "wrangler deploy --env=\"\" --dry-run --outdir /tmp/pocket-worker-build"
+  },
+  "dependencies": {
+    "@zxing/library": "^0.21.3",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "vite": "^7.1.0",
+    "wrangler": "^4.151.1"
+  }
+}

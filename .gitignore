@@ -1,0 +1,11 @@
+node_modules/
+dist/
+*.p12
+*.pem
+*.cer
+.wrangler/
+.env
+.env.local
+.env.*.local
+.dev.vars
+.dev.vars.*

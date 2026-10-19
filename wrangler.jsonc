@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "pocket-pass-signing",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-10-19",
+  "workers_dev": true,
+  "observability": { "enabled": false },
+  "vars": {
+    "ALLOWED_ORIGINS": "https://tonipenya.github.io"
+  },
+  "env": {
+    "local": {
+      "vars": {
+        "ALLOWED_ORIGINS": "http://127.0.0.1:5173,http://localhost:5173"
+      }
+    }
+  }
+}
