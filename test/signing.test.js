@@ -52,6 +52,7 @@ test('proxy sends one request to a fixed endpoint and never forwards payment or 
   const worker = createWorker(async (url, options) => {
     calls++;
     assert.equal(url, 'https://walletmcppass.com/api/passes');
+    assert.equal(options.redirect, 'manual');
     assert.deepEqual(options.headers, { 'Content-Type': 'application/json' });
     assert.equal(JSON.parse(options.body).style, 'generic');
     return success();

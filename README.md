@@ -65,6 +65,6 @@ npm run build
 npm run worker:check
 ```
 
-Tests cover placeholder omission, payload mapping, CORS preflight, request limits, error handling, quota failures, and the absence of payment retries/forwarded credentials. Live integration can be checked with dummy data through the local Worker; this consumes a real service request. An iPhone is still needed to verify Wallet installation.
+Tests cover placeholder omission, payload mapping, CORS preflight, request limits, error handling, quota failures, and the absence of payment retries/forwarded credentials. Live integration can be checked with dummy data through the local Worker; this consumes a real service request. Verified on 2026-10-19: the local browser flow generated a signed pass; the deployed Cloudflare Worker passed a GitHub-origin CORS preflight and returned a pass containing the requested text, barcode, logo, and thumbnail. File hashes and the CMS signature were verified against Apple’s root certificate. An iPhone is still needed to verify Wallet installation.
 
 References: [Signing service](https://walletmcppass.com/), [Workers limits](https://developers.cloudflare.com/workers/platform/limits/).
