@@ -71,7 +71,7 @@ function selectElement(key) {
     return;
   }
   if (state.fields[key]) {
-    editor.innerHTML = '<div class="style-row"><label>Size <output id="size-output"></output></label></div><input id="field-size" aria-label="Text size" type="range" min="10" max="38"><button class="clear-button" id="clear-field">Clear field</button><p class="small-note">Text size is preview-only. Wallet controls the final typography.</p>';
+    editor.innerHTML = '<div class="style-row"><label>Size <output id="size-output"></output></label></div><input id="field-size" aria-label="Text size" type="range" min="10" max="38"><button class="clear-button" id="clear-field">Clear field</button>';
     const field = state.fields[key];
     const size = editor.querySelector('#field-size'); size.value = field.size;
     editor.querySelector('#size-output').textContent = `${field.size}px`;
@@ -172,12 +172,6 @@ document.querySelector('#reset').onclick = () => {
   if (!confirm('Clear this pass and start again?')) return;
   barcodeRevision++; state = freshState(); selectElement(null);
 };
-document.querySelector('#download').onclick = () => {
-  document.querySelector('#export-status').textContent = '';
-  document.querySelector('#export-result').hidden = true;
-  document.querySelector('#signed-download').hidden = false;
-  dialog.showModal();
-};
 document.querySelector('#close-dialog').onclick = () => dialog.close();
 
 
@@ -198,19 +192,20 @@ async function signingImages() {
   return images;
 }
 const signingEndpoint = import.meta.env.VITE_SIGNING_URL || (import.meta.env.DEV ? '/api/passes' : '');
-document.querySelector('#export-form').onsubmit = async event => {
-  event.preventDefault();
-  const button = document.querySelector('#signed-download'); button.disabled = true;
-  const status = document.querySelector('#export-status'); status.textContent = 'Creating your pass…';
+document.querySelector('#download').onclick = async () => {
+  const button = document.querySelector('#download');
+  button.disabled = true;
+  button.textContent = 'Creating pass…';
   try {
     const payload = makeSigningRequest(state, await signingImages());
     const result = await requestSignedPass(signingEndpoint, payload);
-    const link = document.querySelector('#pass-link'); link.href = result.download_url;
+    document.querySelector('#pass-link').href = result.download_url;
     document.querySelector('#pass-qr').src = await QRCode.toDataURL(result.download_url, { width: 180, margin: 2 });
-    document.querySelector('#export-result').hidden = false;
-    button.hidden = true;
-    status.textContent = 'Ready. Open the link in Safari on your iPhone to add it to Wallet. The link expires in one hour.';
-  } catch (error) { status.textContent = error.message; }
-  finally { button.disabled = false; }
+    dialog.showModal();
+  } catch (error) { showMessage(error.message); }
+  finally {
+    button.disabled = false;
+    button.innerHTML = 'Download pass <span>↓</span>';
+  }
 };
 selectElement(null);

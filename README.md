@@ -2,7 +2,7 @@
 
 A minimal Apple Wallet pass editor. The frontend runs on GitHub Pages; a small Cloudflare Worker forwards signing requests to walletmcppass. No Apple Developer subscription, signing certificates, API keys, database, or paid signing client.
 
-Click a field to edit it. Edit text and labels directly on the card. Upload or paste a logo or barcode image; paste text onto a selected barcode to generate a QR code. Empty fields never export example text. On Download, the app explains where the card is sent; Create free pass returns a signed download link and a QR code for opening it on an iPhone.
+Click a field to edit it. Edit text and labels directly on the card. Upload or paste a logo or barcode image; paste text onto a selected barcode to generate a QR code. Empty fields never export example text. Download pass starts signing immediately, then shows the download link, a QR code, and a short service credit.
 
 ## Local development
 
