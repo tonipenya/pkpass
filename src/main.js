@@ -6,7 +6,7 @@ import { makeSigningRequest, requestSignedPass } from './signing.js';
 const defaults = {
   organization: { label: '', placeholder: 'Your brand', size: 16 },
   header: { label: 'PASS TYPE', placeholder: 'Member', size: 15 },
-  primary: { label: 'PASS TITLE', placeholder: 'Something\nworth keeping.', size: 29 },
+  primary: { label: 'PASS TITLE', placeholder: 'Pass title', size: 29 },
   secondary: { label: 'NAME', placeholder: 'Alex Morgan', size: 16 },
   auxiliary: { label: 'MEMBER SINCE', placeholder: '2026', size: 16 },
 };
@@ -59,11 +59,11 @@ function selectElement(key) {
   selected = key;
   renderCard();
   if (!key) {
-    editor.innerHTML = '<div class="hint-icon">↖</div><h2>A blank canvas.<br>A little possibility.</h2><p>Every detail is yours to edit.<br>Start with a name, an image,<br>or that one useful barcode.</p><p class="small-note">Empty fields stay empty on export.</p>';
+    editor.replaceChildren();
     return;
   }
   if (state.fields[key]) {
-    editor.innerHTML = '<div class="eyebrow">EDIT TEXT</div><label>Text<input id="field-value" type="text" autocomplete="off"></label><label id="label-control">Label<input id="field-label" type="text"></label><div class="style-row"><label>Color <input id="field-color" type="color"></label><label>Size <output id="size-output"></output></label></div><input id="field-size" aria-label="Text size" type="range" min="10" max="38"><button class="clear-button" id="clear-field">Clear field</button><p class="small-note">Size and individual text colors apply to this preview. Apple Wallet uses its own typography and shared text colors.</p>';
+    editor.innerHTML = '<div class="eyebrow">EDIT TEXT</div><label>Text<input id="field-value" type="text" autocomplete="off"></label><label id="label-control">Label<input id="field-label" type="text"></label><div class="style-row"><label>Color <input id="field-color" type="color"></label><label>Size <output id="size-output"></output></label></div><input id="field-size" aria-label="Text size" type="range" min="10" max="38"><button class="clear-button" id="clear-field">Clear field</button><p class="small-note">Text styling is preview-only. Wallet controls the final appearance.</p>';
     const field = state.fields[key];
     const value = editor.querySelector('#field-value'); value.value = field.value; value.placeholder = field.placeholder.replace('\n', ' ');
     const label = editor.querySelector('#field-label'); label.value = field.label;
@@ -78,12 +78,12 @@ function selectElement(key) {
     editor.querySelector('#clear-field').onclick = () => { field.value = ''; renderCard(); selectElement(key); };
     value.focus();
   } else if (key === 'background') {
-    editor.innerHTML = '<div class="eyebrow">CARD COLOR</div><h2>Set the tone.</h2><label>Background <input id="card-color" type="color"></label><p>One simple, solid color.</p>';
+    editor.innerHTML = '<label>Card color <input id="card-color" type="color"></label>';
     const color = editor.querySelector('#card-color'); color.value = state.background;
     color.oninput = () => { state.background = color.value; renderCard(); };
   } else {
     const isBarcode = key === 'barcode';
-    editor.innerHTML = `<div class="eyebrow">${isBarcode ? 'BARCODE' : key.toUpperCase()}</div><h2>${isBarcode ? 'A little shortcut.' : 'Add a personal touch.'}</h2>${isBarcode ? '<label>Barcode content<input id="barcode-value" type="text" placeholder="A member ID, link, or text"></label><p class="small-note">Type to create a QR code, or upload a QR, Aztec, PDF417, or Code 128 image.</p>' : '<p>Upload an image, or paste one<br>with ⌘V / Ctrl+V.</p>'}<button class="upload-button" id="upload">Choose image ↑</button><button class="clear-button" id="remove-image">Remove ${isBarcode ? 'barcode' : 'image'}</button><p class="small-note">${isBarcode ? 'Uploaded codes are decoded so Wallet can recreate a scannable barcode. You can also paste a barcode image.' : 'PNG, JPG, WebP, or any image your browser can open. Sent for signing only when you download.'}</p>`;
+    editor.innerHTML = `<div class="eyebrow">${isBarcode ? 'BARCODE' : key.toUpperCase()}</div>${isBarcode ? '<label>Barcode content<input id="barcode-value" type="text" placeholder="A member ID, link, or text"></label><p class="small-note">Type for QR. Upload QR, Aztec, PDF417, or Code 128.</p>' : '<p>Upload or paste (⌘V / Ctrl+V).</p>'}<button class="upload-button" id="upload">Choose image ↑</button><button class="clear-button" id="remove-image">Remove ${isBarcode ? 'barcode' : 'image'}</button>`;
     editor.querySelector('#upload').onclick = () => { imageTarget = key; imageInput.click(); };
     editor.querySelector('#remove-image').onclick = () => { if (isBarcode) { barcodeRevision++; state.barcode = null; } else delete state.images[key]; renderCard(); selectElement(key); };
     if (isBarcode) {
