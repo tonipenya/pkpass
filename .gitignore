@@ -9,3 +9,9 @@ dist/
 .env.*.local
 .dev.vars
 .dev.vars.*
+*.pfx
+*.key
+*.crt
+*.log
+.env.*
+!.env.example
