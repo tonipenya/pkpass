@@ -54,7 +54,7 @@ For a manual static build, copy `.env.example` to `.env.local`, set the URL, and
 - Download sends card text, images, and barcode content through Cloudflare to walletmcppass. The service says it deletes generated pass files after one hour and logs request metadata, including organization name. Pocket requests no ongoing pass updates and stores no drafts or pass data on its Worker. Cloudflare observability is disabled in its config.
 - The Worker accepts only the configured browser origins and a fixed signing endpoint. CORS is a browser restriction, not authentication or protection against scripts impersonating an origin. Free-service quotas still apply.
 - The browser normalizes uploaded images to PNG. The Worker caps requests at 6 MiB and accepts embedded image data only.
-- Wallet chooses typography and final layout. Individual text colors and sizes affect only the editor preview; the solid background color exports. Uploaded QR, Aztec, PDF417 and Code 128 images are decoded into real barcode content.
+- Wallet chooses typography and final layout. Text, label, and background colors apply globally and export to Wallet. Individual text sizes affect only the editor preview. Uploaded QR, Aztec, PDF417 and Code 128 images are decoded into real barcode content.
 - Refreshing clears the draft. Fonts are loaded from Google Fonts; application dependencies are bundled.
 
 ## Verification

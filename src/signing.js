@@ -10,8 +10,8 @@ export function makeSigningRequest(state, images = {}) {
     logo_text: state.fields.organization.value.trim(),
     generate_logo: false,
     background_color: state.background,
-    foreground_color: '#faf7e9',
-    label_color: '#c4d3b0',
+    foreground_color: state.textColor,
+    label_color: state.labelColor,
     header_fields: field('header'), primary_fields: field('primary'),
     secondary_fields: field('secondary'), auxiliary_fields: field('auxiliary'),
     ...(state.barcode ? {

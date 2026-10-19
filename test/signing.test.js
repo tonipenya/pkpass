@@ -5,7 +5,7 @@ import { createWorker } from '../worker/index.js';
 
 const origin = 'https://tonipenya.github.io';
 const env = { ALLOWED_ORIGINS: origin };
-const state = () => ({ background: '#294f45', fields: Object.fromEntries(['organization', 'header', 'primary', 'secondary', 'auxiliary'].map(key => [key, { label: 'EXAMPLE', value: '', placeholder: 'PLACEHOLDER' }])), barcode: null });
+const state = () => ({ background: '#294f45', textColor: '#faf7e9', labelColor: '#c4d3b0', fields: Object.fromEntries(['organization', 'header', 'primary', 'secondary', 'auxiliary'].map(key => [key, { label: 'EXAMPLE', value: '', placeholder: 'PLACEHOLDER' }])), barcode: null });
 const request = (body, options = {}) => new Request('https://worker.example/api/passes', { method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' }, body: JSON.stringify(body), ...options });
 const success = () => Response.json({ download_url: 'https://walletmcppass.com/download/test', expires_in_seconds: 3600, serial_number: 'private' });
 
@@ -21,12 +21,14 @@ test('blank placeholders and labels never enter the signing payload', () => {
   assert.doesNotMatch(JSON.stringify(payload), /PLACEHOLDER|EXAMPLE/);
 });
 test('text, background, supported barcode formats and images map to the API', () => {
-  const draft = state(); draft.fields.primary.value = '  Library card  ';
+  const draft = state(); draft.textColor = '#ffffff'; draft.labelColor = '#f0c060'; draft.fields.primary.value = '  Library card  ';
   draft.fields.secondary.value = '   ';
   draft.barcode = { format: 'PKBarcodeFormatCode128', message: 'ABC123', preview: 'never send this' };
   const payload = makeSigningRequest(draft, { icon_png_b64: 'YWJj', thumbnail_png_b64: 'YWJj' });
   assert.equal(payload.primary_fields[0].value, 'Library card');
   assert.equal(payload.background_color, '#294f45');
+  assert.equal(payload.foreground_color, '#ffffff');
+  assert.equal(payload.label_color, '#f0c060');
   assert.equal(payload.barcode_format, 'Code128');
   assert.equal(payload.thumbnail_png_b64, 'YWJj');
   assert.deepEqual(payload.secondary_fields, []);

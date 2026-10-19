@@ -10,7 +10,7 @@ const defaults = {
   secondary: { label: 'NAME', placeholder: 'Alex Morgan', size: 16 },
   auxiliary: { label: 'MEMBER SINCE', placeholder: '2026', size: 16 },
 };
-const freshState = () => ({ serialNumber: crypto.randomUUID(), background: '#294f45', fields: Object.fromEntries(Object.entries(defaults).map(([key, field]) => [key, { ...field, value: '', color: '#faf7e9' }])), images: {}, barcode: null });
+const freshState = () => ({ serialNumber: crypto.randomUUID(), background: '#294f45', textColor: '#faf7e9', labelColor: '#c4d3b0', fields: Object.fromEntries(Object.entries(defaults).map(([key, field]) => [key, { ...field, value: '' }])), images: {}, barcode: null });
 let state = freshState();
 let selected = null;
 let imageTarget = null;
@@ -28,16 +28,22 @@ const showMessage = (message) => {
 };
 function renderCard() {
   document.querySelector('#pass-card').style.setProperty('--card-background', state.background);
-  document.querySelector('#background-swatch').style.background = state.background;
+  document.querySelectorAll('[data-color]').forEach(input => {
+    input.value = state[input.dataset.color];
+    input.parentElement.style.background = input.value;
+  });
   for (const [key, field] of Object.entries(state.fields)) {
     const button = document.querySelector(`[data-field="${key}"]`);
     const value = button.querySelector('.value');
     if (document.activeElement !== value) value.textContent = field.value;
     value.dataset.placeholder = field.placeholder;
-    button.querySelector('.value').style.color = field.color;
+    button.querySelector('.value').style.color = state.textColor;
     button.querySelector('.value').style.fontSize = `${field.size}px`;
     const label = button.querySelector('.label');
-    if (label && document.activeElement !== label) label.textContent = field.label;
+    if (label) {
+      if (document.activeElement !== label) label.textContent = field.label;
+      label.style.color = state.labelColor;
+    }
     button.classList.toggle('selected', selected === key);
   }
   for (const key of ['logo']) {
@@ -65,12 +71,10 @@ function selectElement(key) {
     return;
   }
   if (state.fields[key]) {
-    editor.innerHTML = '<div class="style-row"><label>Color <input id="field-color" type="color"></label><label>Size <output id="size-output"></output></label></div><input id="field-size" aria-label="Text size" type="range" min="10" max="38"><button class="clear-button" id="clear-field">Clear field</button><p class="small-note">Text styling is preview-only. Wallet controls the final appearance.</p>';
+    editor.innerHTML = '<div class="style-row"><label>Size <output id="size-output"></output></label></div><input id="field-size" aria-label="Text size" type="range" min="10" max="38"><button class="clear-button" id="clear-field">Clear field</button><p class="small-note">Text size is preview-only. Wallet controls the final typography.</p>';
     const field = state.fields[key];
-    const color = editor.querySelector('#field-color'); color.value = field.color;
     const size = editor.querySelector('#field-size'); size.value = field.size;
     editor.querySelector('#size-output').textContent = `${field.size}px`;
-    color.oninput = () => { field.color = color.value; renderCard(); };
     size.oninput = () => { field.size = Number(size.value); editor.querySelector('#size-output').textContent = `${size.value}px`; renderCard(); };
     editor.querySelector('#clear-field').onclick = () => { field.value = ''; renderCard(); };
   } else {
@@ -161,11 +165,12 @@ for (const key of ['logo', 'barcode']) {
   button.onfocus = () => { if (selected !== key) selectElement(key); };
   button.onclick = () => { if (selected !== key) selectElement(key); };
 }
-const cardColor = document.querySelector('#card-color');
-cardColor.oninput = () => { state.background = cardColor.value; renderCard(); };
+document.querySelectorAll('[data-color]').forEach(input => {
+  input.oninput = () => { state[input.dataset.color] = input.value; renderCard(); };
+});
 document.querySelector('#reset').onclick = () => {
   if (!confirm('Clear this pass and start again?')) return;
-  barcodeRevision++; state = freshState(); cardColor.value = state.background; selectElement(null);
+  barcodeRevision++; state = freshState(); selectElement(null);
 };
 document.querySelector('#download').onclick = () => {
   document.querySelector('#export-status').textContent = '';
