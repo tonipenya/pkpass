@@ -31,21 +31,23 @@ function renderCard() {
   document.querySelector('#background-swatch').style.background = state.background;
   for (const [key, field] of Object.entries(state.fields)) {
     const button = document.querySelector(`[data-field="${key}"]`);
-    button.querySelector('.value').textContent = field.value || field.placeholder;
+    const value = button.querySelector('.value');
+    if (document.activeElement !== value) value.textContent = field.value;
+    value.dataset.placeholder = field.placeholder;
     button.querySelector('.value').style.color = field.color;
     button.querySelector('.value').style.fontSize = `${field.size}px`;
     const label = button.querySelector('.label');
-    if (label) label.textContent = field.label;
+    if (label && document.activeElement !== label) label.textContent = field.label;
     button.classList.toggle('selected', selected === key);
   }
-  for (const key of ['logo', 'thumbnail']) {
+  for (const key of ['logo']) {
     const button = document.getElementById(key);
     button.replaceChildren();
     if (state.images[key]) {
       const image = new Image(); image.src = state.images[key]; image.alt = key; button.append(image);
     } else {
       const plus = document.createElement('span'); plus.textContent = '＋';
-      const caption = document.createElement('small'); caption.textContent = key === 'logo' ? 'LOGO' : 'IMAGE';
+      const caption = document.createElement('small'); caption.textContent = 'LOGO';
       button.append(plus, caption);
     }
   }
@@ -63,45 +65,40 @@ function selectElement(key) {
     return;
   }
   if (state.fields[key]) {
-    editor.innerHTML = '<div class="eyebrow">EDIT TEXT</div><label>Text<input id="field-value" type="text" autocomplete="off"></label><label id="label-control">Label<input id="field-label" type="text"></label><div class="style-row"><label>Color <input id="field-color" type="color"></label><label>Size <output id="size-output"></output></label></div><input id="field-size" aria-label="Text size" type="range" min="10" max="38"><button class="clear-button" id="clear-field">Clear field</button><p class="small-note">Text styling is preview-only. Wallet controls the final appearance.</p>';
+    editor.innerHTML = '<div class="style-row"><label>Color <input id="field-color" type="color"></label><label>Size <output id="size-output"></output></label></div><input id="field-size" aria-label="Text size" type="range" min="10" max="38"><button class="clear-button" id="clear-field">Clear field</button><p class="small-note">Text styling is preview-only. Wallet controls the final appearance.</p>';
     const field = state.fields[key];
-    const value = editor.querySelector('#field-value'); value.value = field.value; value.placeholder = field.placeholder.replace('\n', ' ');
-    const label = editor.querySelector('#field-label'); label.value = field.label;
-    editor.querySelector('#label-control').hidden = key === 'organization';
     const color = editor.querySelector('#field-color'); color.value = field.color;
     const size = editor.querySelector('#field-size'); size.value = field.size;
     editor.querySelector('#size-output').textContent = `${field.size}px`;
-    value.oninput = () => { field.value = value.value; renderCard(); };
-    label.oninput = () => { field.label = label.value; renderCard(); };
     color.oninput = () => { field.color = color.value; renderCard(); };
     size.oninput = () => { field.size = Number(size.value); editor.querySelector('#size-output').textContent = `${size.value}px`; renderCard(); };
-    editor.querySelector('#clear-field').onclick = () => { field.value = ''; renderCard(); selectElement(key); };
-    value.focus();
-  } else if (key === 'background') {
-    editor.innerHTML = '<label>Card color <input id="card-color" type="color"></label>';
-    const color = editor.querySelector('#card-color'); color.value = state.background;
-    color.oninput = () => { state.background = color.value; renderCard(); };
+    editor.querySelector('#clear-field').onclick = () => { field.value = ''; renderCard(); };
   } else {
     const isBarcode = key === 'barcode';
-    editor.innerHTML = `<div class="eyebrow">${isBarcode ? 'BARCODE' : key.toUpperCase()}</div>${isBarcode ? '<label>Barcode content<input id="barcode-value" type="text" placeholder="A member ID, link, or text"></label><p class="small-note">Type for QR. Upload QR, Aztec, PDF417, or Code 128.</p>' : '<p>Upload or paste (⌘V / Ctrl+V).</p>'}<button class="upload-button" id="upload">Choose image ↑</button><button class="clear-button" id="remove-image">Remove ${isBarcode ? 'barcode' : 'image'}</button>`;
+    editor.innerHTML = `<div class="eyebrow">${isBarcode ? 'BARCODE' : key.toUpperCase()}</div>${isBarcode ? '<label>Barcode content<input id="barcode-value" type="text" placeholder="A member ID, link, or text"></label><p class="small-note">Type for QR. Upload or paste a barcode image (⌘V / Ctrl+V).</p>' : '<p>Upload or paste (⌘V / Ctrl+V).</p>'}<button class="upload-button" id="upload">Choose image ↑</button><button class="clear-button" id="remove-image">Remove ${isBarcode ? 'barcode' : 'image'}</button>`;
     editor.querySelector('#upload').onclick = () => { imageTarget = key; imageInput.click(); };
     editor.querySelector('#remove-image').onclick = () => { if (isBarcode) { barcodeRevision++; state.barcode = null; } else delete state.images[key]; renderCard(); selectElement(key); };
     if (isBarcode) {
       const input = editor.querySelector('#barcode-value'); input.value = state.barcode?.message || '';
-      input.oninput = async () => {
-        const revision = ++barcodeRevision;
-        const message = input.value;
-        if (!message) { state.barcode = null; renderCard(); return; }
-        try {
-          const preview = await QRCode.toDataURL(message, { margin: 2, width: 220 });
-          if (revision !== barcodeRevision) return;
-          state.barcode = { message, format: 'PKBarcodeFormatQR', preview }; renderCard();
-        } catch { if (revision === barcodeRevision) { state.barcode = null; renderCard(); showMessage('This text is too long for a QR code.'); } }
-      };
+      input.oninput = () => setBarcodeMessage(input.value);
     }
   }
 }
+async function setBarcodeMessage(message) {
+  const revision = ++barcodeRevision;
+  if (!message) { state.barcode = null; renderCard(); return; }
+  try {
+    const preview = await QRCode.toDataURL(message, { margin: 2, width: 220 });
+    if (revision !== barcodeRevision) return;
+    state.barcode = { message, format: 'PKBarcodeFormatQR', preview };
+    renderCard();
+  } catch {
+    if (revision !== barcodeRevision) return;
+    state.barcode = null; renderCard(); showMessage('This text is too long for a QR code.');
+  }
+}
 async function readImage(file, target) {
+  const revision = target === 'barcode' ? ++barcodeRevision : null;
   const url = URL.createObjectURL(file);
   try {
     const image = new Image(); image.src = url; await image.decode();
@@ -111,7 +108,6 @@ async function readImage(file, target) {
     canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
     const dataUrl = canvas.toDataURL('image/png');
     if (target === 'barcode') {
-      const revision = ++barcodeRevision;
       const reader = new BrowserMultiFormatReader();
       let result;
       try { result = await reader.decodeFromImageUrl(url); } finally { reader.reset(); }
@@ -129,16 +125,47 @@ imageInput.onchange = () => { if (imageInput.files[0]) readImage(imageInput.file
 document.addEventListener('paste', event => {
   if (dialog.open) return;
   const file = [...(event.clipboardData?.items || [])].find(item => item.type.startsWith('image/'))?.getAsFile();
-  if (!file) return;
-  event.preventDefault();
-  readImage(file, ['logo', 'thumbnail', 'barcode'].includes(selected) ? selected : 'thumbnail');
+  if (file) {
+    event.preventDefault();
+    readImage(file, selected === 'barcode' ? 'barcode' : 'logo');
+  } else if (selected === 'barcode' && event.target.closest('#barcode')) {
+    event.preventDefault();
+    const message = event.clipboardData.getData('text/plain');
+    const input = editor.querySelector('#barcode-value');
+    if (input) input.value = message;
+    setBarcodeMessage(message);
+  }
 });
-document.querySelectorAll('[data-field]').forEach(button => button.onclick = () => selectElement(button.dataset.field));
-for (const key of ['logo', 'thumbnail', 'barcode']) document.getElementById(key).onclick = () => selectElement(key);
-document.querySelector('#background-button').onclick = () => selectElement('background');
+document.querySelectorAll('[data-field]').forEach(container => {
+  const key = container.dataset.field;
+  for (const property of ['value', 'label']) {
+    const element = container.querySelector(`.${property}`);
+    if (!element) continue;
+    element.contentEditable = 'plaintext-only';
+    element.setAttribute('role', 'textbox');
+    element.setAttribute('aria-label', `${key} ${property === 'value' ? 'text' : 'label'}`);
+    element.dataset.placeholder = property === 'value' ? defaults[key].placeholder : 'Label';
+    element.onfocus = () => { if (selected !== key) selectElement(key); };
+    element.oninput = () => { state.fields[key][property] = element.textContent; };
+    element.onblur = () => renderCard();
+    element.onkeydown = event => {
+      if (event.key === 'Enter') { event.preventDefault(); element.blur(); }
+    };
+  }
+  container.onclick = event => {
+    if (event.target === container) container.querySelector('.value').focus();
+  };
+});
+for (const key of ['logo', 'barcode']) {
+  const button = document.getElementById(key);
+  button.onfocus = () => { if (selected !== key) selectElement(key); };
+  button.onclick = () => { if (selected !== key) selectElement(key); };
+}
+const cardColor = document.querySelector('#card-color');
+cardColor.oninput = () => { state.background = cardColor.value; renderCard(); };
 document.querySelector('#reset').onclick = () => {
   if (!confirm('Clear this pass and start again?')) return;
-  barcodeRevision++; state = freshState(); selectElement(null);
+  barcodeRevision++; state = freshState(); cardColor.value = state.background; selectElement(null);
 };
 document.querySelector('#download').onclick = () => {
   document.querySelector('#export-status').textContent = '';
@@ -163,7 +190,6 @@ async function imageBase64(source, width, height, background) {
 async function signingImages() {
   const images = { icon_png_b64: await imageBase64(state.images.logo, 87, 87, state.background) };
   if (state.images.logo) images.logo_png_b64 = await imageBase64(state.images.logo, 480, 150);
-  if (state.images.thumbnail) images.thumbnail_png_b64 = await imageBase64(state.images.thumbnail, 270, 270);
   return images;
 }
 const signingEndpoint = import.meta.env.VITE_SIGNING_URL || (import.meta.env.DEV ? '/api/passes' : '');
