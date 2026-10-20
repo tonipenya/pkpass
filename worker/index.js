@@ -41,7 +41,7 @@ export function createWorker(sendRequest = fetch) {
       catch { return respond({ error: 'The pass is not valid JSON.' }, 400); }
       if (!payload || payload.style !== 'generic') return respond({ error: 'Send a generic pass.' }, 400);
       // Do not accept update subscriptions, remote image URLs, or arbitrary service options.
-      const permitted = ['style', 'organization_name', 'description', 'logo_text', 'generate_logo', 'background_color', 'foreground_color', 'label_color', 'header_fields', 'primary_fields', 'secondary_fields', 'auxiliary_fields', 'barcode_message', 'barcode_format', 'icon_png_b64', 'logo_png_b64', 'thumbnail_png_b64'];
+      const permitted = ['style', 'organization_name', 'description', 'logo_text', 'generate_logo', 'background_color', 'foreground_color', 'label_color', 'header_fields', 'primary_fields', 'secondary_fields', 'auxiliary_fields', 'barcode_message', 'barcode_format', 'barcode_alt_text', 'icon_png_b64', 'logo_png_b64', 'thumbnail_png_b64'];
       if (Object.keys(payload).some(key => !permitted.includes(key))) return respond({ error: 'Unsupported pass option.' }, 400);
       for (const key of ['icon_png_b64', 'logo_png_b64', 'thumbnail_png_b64']) {
         if (payload[key] && (typeof payload[key] !== 'string' || !/^[A-Za-z0-9+/=]+$/.test(payload[key]))) return respond({ error: 'Upload images as base64 PNG data.' }, 400);

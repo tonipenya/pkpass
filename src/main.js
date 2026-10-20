@@ -1,5 +1,7 @@
 import './style.css';
 import QRCode from 'qrcode';
+import JsBarcode from 'jsbarcode';
+import { barcodeFormat, barcodeCaption } from './barcode.js';
 import { BrowserMultiFormatReader, BarcodeFormat } from '@zxing/library';
 import { makeSigningRequest, requestSignedPass } from './signing.js';
 
@@ -16,6 +18,7 @@ let selected = null;
 let imageTarget = null;
 let toastTimer;
 let barcodeRevision = 0;
+let barcodePreference = 'auto';
 const editor = document.querySelector('#editor');
 const imageInput = document.querySelector('#image-input');
 const dialog = document.querySelector('#export-dialog');
@@ -58,9 +61,19 @@ function renderCard() {
     }
   }
   const barcode = document.querySelector('#barcode');
+  const formatInput = editor.querySelector('#barcode-format');
+  if (formatInput) formatInput.value = state.barcode?.format === 'PKBarcodeFormatCode128' ? 'barcode' : 'qr';
   if (state.barcode?.preview) {
     const image = new Image(); image.src = state.barcode.preview; image.alt = 'Pass barcode';
     barcode.replaceChildren(image);
+    const caption = barcodeCaption(state.barcode);
+    if (caption) {
+      const text = document.createElement('span');
+      text.className = 'barcode-caption';
+      text.textContent = caption;
+      text.style.color = state.textColor;
+      barcode.append(text);
+    }
   } else barcode.innerHTML = '<span class="sample-barcode" aria-hidden="true"></span><span class="barcode-caption">Add a barcode</span>';
 }
 function selectElement(key) {
@@ -79,12 +92,15 @@ function selectElement(key) {
     editor.querySelector('#clear-field').onclick = () => { field.value = ''; renderCard(); };
   } else {
     const isBarcode = key === 'barcode';
-    editor.innerHTML = `<div class="eyebrow">${isBarcode ? 'BARCODE' : key.toUpperCase()}</div>${isBarcode ? '<label>Barcode content<input id="barcode-value" type="text" placeholder="A member ID, link, or text"></label><p class="small-note">Type for QR. Upload or paste a barcode image (⌘V / Ctrl+V).</p>' : '<p>Upload or paste (⌘V / Ctrl+V).</p>'}<button class="upload-button" id="upload">Choose image ↑</button><button class="clear-button" id="remove-image">Remove ${isBarcode ? 'barcode' : 'image'}</button>`;
+    editor.innerHTML = `<div class="eyebrow">${isBarcode ? 'BARCODE' : key.toUpperCase()}</div>${isBarcode ? '<label>Barcode content<input id="barcode-value" type="text" placeholder="A member ID, link, or text"></label><label>Format<select id="barcode-format"><option value="barcode">Barcode</option><option value="qr">QR</option></select></label><p class="small-note">Upload or paste an image (⌘V / Ctrl+V).</p>' : '<p>Upload or paste (⌘V / Ctrl+V).</p>'}<button class="upload-button" id="upload">Choose image ↑</button><button class="clear-button" id="remove-image">Remove ${isBarcode ? 'barcode' : 'image'}</button>`;
     editor.querySelector('#upload').onclick = () => { imageTarget = key; imageInput.click(); };
     editor.querySelector('#remove-image').onclick = () => { if (isBarcode) { barcodeRevision++; state.barcode = null; } else delete state.images[key]; renderCard(); selectElement(key); };
     if (isBarcode) {
       const input = editor.querySelector('#barcode-value'); input.value = state.barcode?.message || '';
       input.oninput = () => setBarcodeMessage(input.value);
+      const format = editor.querySelector('#barcode-format');
+      format.value = state.barcode?.format === 'PKBarcodeFormatCode128' ? 'barcode' : 'qr';
+      format.onchange = () => { barcodePreference = format.value; setBarcodeMessage(input.value); };
     }
   }
 }
@@ -92,9 +108,15 @@ async function setBarcodeMessage(message) {
   const revision = ++barcodeRevision;
   if (!message) { state.barcode = null; renderCard(); return; }
   try {
-    const preview = await QRCode.toDataURL(message, { margin: 2, width: 220 });
+    const format = barcodeFormat(message, barcodePreference);
+    let preview;
+    if (format === 'PKBarcodeFormatCode128') {
+      const canvas = document.createElement('canvas');
+      JsBarcode(canvas, message, { format: 'CODE128', displayValue: false, width: 2, height: 80, margin: 12 });
+      preview = canvas.toDataURL('image/png');
+    } else preview = await QRCode.toDataURL(message, { margin: 2, width: 220 });
     if (revision !== barcodeRevision) return;
-    state.barcode = { message, format: 'PKBarcodeFormatQR', preview };
+    state.barcode = { message, format, preview };
     renderCard();
   } catch {
     if (revision !== barcodeRevision) return;
@@ -120,6 +142,7 @@ async function readImage(file, target) {
       if (!format) throw new Error('Use a QR, Aztec, PDF417, or Code 128 barcode.');
       if (revision !== barcodeRevision) return;
       state.barcode = { message: result.getText(), format, preview: dataUrl };
+      barcodePreference = format === 'PKBarcodeFormatQR' ? 'qr' : 'barcode';
     } else state.images[target] = dataUrl;
     renderCard(); selectElement(target);
   } catch (error) { showMessage(target === 'barcode' ? error.message || 'No readable barcode found. Try a clearer image.' : 'This image could not be opened. Try a PNG or JPG.'); }
@@ -170,7 +193,7 @@ document.querySelectorAll('[data-color]').forEach(input => {
 });
 document.querySelector('#reset').onclick = () => {
   if (!confirm('Clear this pass and start again?')) return;
-  barcodeRevision++; state = freshState(); selectElement(null);
+  barcodeRevision++; barcodePreference = 'auto'; state = freshState(); selectElement(null);
 };
 document.querySelector('#close-dialog').onclick = () => dialog.close();
 

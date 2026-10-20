@@ -16,3 +16,6 @@
 .color-dot{position:relative;display:block;width:17px;height:17px;border-radius:50%;border:1px solid #283c3533;overflow:hidden;cursor:pointer}
 .color-dot input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
 .color-dot:focus-within{outline:2px solid #8c927e;outline-offset:3px}
+.editor select{width:100%;padding:9px;border:1px solid #dce0d3;background:#fafaf6;border-radius:6px;margin-top:5px;color:#334333;font:inherit}
+.barcode-caption{max-width:100%;overflow-wrap:anywhere;white-space:pre-wrap}
+.barcode-slot img{max-width:100%}

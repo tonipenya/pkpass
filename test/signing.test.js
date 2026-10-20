@@ -30,6 +30,7 @@ test('text, background, supported barcode formats and images map to the API', ()
   assert.equal(payload.foreground_color, '#ffffff');
   assert.equal(payload.label_color, '#f0c060');
   assert.equal(payload.barcode_format, 'Code128');
+  assert.equal(payload.barcode_alt_text, 'ABC123');
   assert.equal(payload.thumbnail_png_b64, 'YWJj');
   assert.deepEqual(payload.secondary_fields, []);
   assert.doesNotMatch(JSON.stringify(payload), /never send this/);
@@ -57,9 +58,12 @@ test('proxy sends one request to a fixed endpoint and never forwards payment or 
     assert.equal(options.redirect, 'manual');
     assert.deepEqual(options.headers, { 'Content-Type': 'application/json' });
     assert.equal(JSON.parse(options.body).style, 'generic');
+    assert.equal(JSON.parse(options.body).barcode_alt_text, '00123');
     return success();
   });
-  const response = await worker.fetch(request(makeSigningRequest(state()), { headers: { Origin: origin, 'Content-Type': 'application/json', 'PAYMENT-SIGNATURE': 'do-not-forward' } }), env);
+  const draft = state();
+  draft.barcode = { format: 'PKBarcodeFormatCode128', message: '00123' };
+  const response = await worker.fetch(request(makeSigningRequest(draft), { headers: { Origin: origin, 'Content-Type': 'application/json', 'PAYMENT-SIGNATURE': 'do-not-forward' } }), env);
   assert.equal(calls, 1);
   assert.equal(response.status, 200);
   assert.equal(response.headers.get('Access-Control-Allow-Origin'), origin);

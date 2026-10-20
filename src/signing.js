@@ -1,3 +1,5 @@
+import { barcodeCaption } from './barcode.js';
+
 export function makeSigningRequest(state, images = {}) {
   const field = key => {
     const { label, value } = state.fields[key];
@@ -17,6 +19,7 @@ export function makeSigningRequest(state, images = {}) {
     ...(state.barcode ? {
       barcode_message: state.barcode.message,
       barcode_format: state.barcode.format.replace('PKBarcodeFormat', ''),
+      barcode_alt_text: barcodeCaption(state.barcode),
     } : {}),
     ...images,
   };
